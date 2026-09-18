@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Modul Interaktif: Literasi Digital</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden; /* Strict No Scroll */
+            touch-action: none; /* Prevent browser swipe-to-refresh */
+            background-color: #f3f4f6;
+        }
+        
+        .dark body {
+            background-color: #111827;
+        }
+
+        /* Slide Transitions */
+        .slide-container {
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .dark .glass {
+            background: rgba(31, 41, 55, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Fact Box Animation */
+        @keyframes pulse-border {
+            0% { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.2); }
+            50% { border-color: rgba(59, 130, 246, 0.8); box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+            100% { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .fact-box {
+            animation: pulse-border 3s infinite;
+        }
+
+        /* Text balance to prevent orphans */
+        h1, h2, h3, p {
+            text-wrap: balance;
+        }
+
+        /* Hide scrollbar for internal content if strictly needed */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="text-gray-800 dark:text-gray-100 h-screen w-screen relative">
+
+    <!-- Progress Bar -->
+    <div class="absolute top-0 left-0 w-full z-50 p-2 flex gap-1 h-3" id="progress-container">
+        <!-- Bars injected via JS -->
+    </div>
+
+    <!-- Top Controls -->
+    <div class="absolute top-6 left-0 w-full z-50 px-4 flex justify-between items-center pointer-events-none">
+        <div class="font-bold text-sm tracking-widest text-brand-600 dark:text-brand-100 uppercase pointer-events-auto bg-white/80 dark:bg-gray-800/80 px-3 py-1 rounded-full backdrop-blur-sm">
+            <i class="fa-solid fa-graduation-cap mr-1"></i> EDU MODULE
+        </div>
+        <div class="flex gap-2 pointer-events-auto">
+            <button id="btn-sound" class="w-10 h-10 rounded-full glass flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+            <button id="btn-theme" class="w-10 h-10 rounded-full glass flex items-center justify-center text-gray-700 dark:text-gray-200 shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Slides Container -->
+    <div id="slider" class="slide-container h-full w-full flex absolute top-0 left-0">
+        <!-- Slides injected via JS -->
+    </div>
+
+    <!-- Explicit Navigation Buttons (Menggantikan lapisan kasat mata) -->
+    <div class="absolute bottom-6 left-0 w-full z-50 px-4 md:px-8 flex justify-between pointer-events-none" id="bottom-nav">
+        <button id="btn-prev" onclick="navigate(-1)" class="pointer-events-auto w-12 h-12 sm:w-auto sm:px-6 sm:py-3 rounded-full glass border border-gray-300 dark:border-gray-600 flex items-center justify-center sm:justify-start gap-2 text-gray-800 dark:text-gray-100 shadow-xl active:scale-95 transition-all hover:bg-gray-100 dark:hover:bg-gray-700 hidden">
+            <i class="fa-solid fa-arrow-left"></i> <span class="hidden sm:inline font-bold">Kembali</span>
+        </button>
+        <button id="btn-next" onclick="navigate(1)" class="pointer-events-auto w-12 h-12 sm:w-auto sm:px-6 sm:py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white flex items-center justify-center sm:justify-end gap-2 shadow-xl active:scale-95 transition-all ml-auto">
+            <span class="hidden sm:inline font-bold">Lanjut</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <script>
+        // --- CONTENT DATA ---
+        const slidesData = [
+            {
+                type: 'intro',
+                icon: '🚀',
+                title: 'Literasi Digital',
+                subtitle: 'Dari Pengguna Teknologi Menjadi Pencipta Produk Digital',
+                content: `Assalamu'alaikum warahmatullahi wabarakatuh.<br><br>Hari ini kita tidak sedang membahas sekadar bagaimana menggunakan komputer, Word, atau mencari sesuatu di Google. <br><br><b>Kita sedang membicarakan masa depan Anda sebagai mahasiswa, calon profesional, dan bagian dari peradaban digital.</b>`,
+                fact: 'Dulu orang bertanya: "Bisa pakai komputer?". Sekarang: "Apa yang bisa kamu ciptakan dengan teknologi untuk manusia?"'
+            },
+            {
+                type: 'content',
+                icon: '🌍',
+                title: 'Kita Hidup di Peradaban Digital',
+                content: `Teknologi bukan lagi sesuatu di luar kehidupan kita. Kita belajar, berkomunikasi, dan mencari ide menggunakan AI dan internet.<br><br>Mahasiswa tidak cukup hanya menjadi <b>pengguna</b>. Anda harus menjadi: <br><br><b>Pengguna Cerdas &rarr; Pembelajar &rarr; Pencipta &rarr; Inovator.</b>`,
+                fact: 'Fakta Global 2024: Lebih dari 5.3 Miliar orang (67% populasi dunia) telah terhubung ke internet. Teknologi adalah bahasa universal baru.'
+            },
+            {
+                type: 'content',
+                icon: '📱',
+                title: 'Konsumen vs Kreator',
+                content: `Ada dua tipe manusia di dunia digital saat ini:<br><br><b>1. Digital Consumer:</b> Hanya scrolling, menonton, chatting, dan bermain.<br><b>2. Digital Creator:</b> Menulis, meneliti, membuat web/aplikasi, mengolah data, dan membangun bisnis.`,
+                fact: 'Hukum 1% Internet (90-9-1 Rule): 90% audiens hanya mengonsumsi, 9% berinteraksi, dan hanya 1% yang MENCIPTAKAN konten/produk.'
+            },
+            {
+                type: 'content',
+                icon: '🤖',
+                title: 'Era Artificial Intelligence (AI)',
+                content: `AI kini dapat membantu menulis, menerjemahkan, membuat program, hingga menganalisis data raksasa.<br><br>Namun ingat: <b>AI bukan pengganti kemampuan berpikir manusia!</b> Justru Anda dituntut semakin kuat dalam berpikir kritis, memverifikasi, dan menyusun gagasan.`,
+                fact: 'ChatGPT mencapai 100 Juta pengguna aktif hanya dalam 2 bulan. Ini adalah adopsi teknologi tercepat dalam sejarah peradaban manusia.'
+            },
+            {
+                type: 'content',
+                icon: '🎓',
+                title: 'Tugas Kampus & Mahasiswa',
+                content: `Kampus harus menghasilkan manusia yang mampu:<br><br>1. Memahami teknologi<br>2. Mengkritisi teknologi<br>3. Menciptakan teknologi secara etis.<br><br>Ubahlah mindset dari <i>"Saya bisa menggunakan aplikasi"</i> menjadi <b><i>"Saya bisa menggunakan teknologi untuk memecahkan masalah."</i></b>`,
+                fact: 'Literasi Digital kini disejajarkan dengan literasi baca-tulis dan numerasi sebagai "Basic Survival Skill" di abad ke-21.'
+            },
+            {
+                type: 'content',
+                icon: '🚀',
+                title: 'Digital Product Development',
+                content: `Word, Excel, PowerPoint tetap penting. Tapi jangan berhenti di sana.<br><br>Kembangkan diri Anda untuk mampu membuat <b>Produk Digital</b> nyata seperti:<br>🌐 Website & Dashboard<br>📚 E-learning & Media Pembelajaran<br>🤖 Sistem berbasis AI`,
+                fact: 'Pasar produk digital edukasi global diproyeksikan bernilai USD 1 Triliun pada tahun 2032. Peluang besar bagi para kreator.'
+            },
+            {
+                type: 'content',
+                icon: '🌐',
+                title: 'Mengapa Perlu Belajar Website?',
+                content: `Media sosial adalah "rumah sewaan" milik platform orang lain. <br><br>Website adalah <b>ruang digital yang Anda miliki dan kelola sendiri.</b><br><br>• Calon Guru &rarr; Website Kelas<br>• Peneliti &rarr; Website Publikasi<br>• Mahasiswa &rarr; Portofolio Digital`,
+                fact: 'Membangun website bukan hanya tentang coding, melainkan kemampuan merepresentasikan identitas diri atau institusi di dunia maya.'
+            },
+            {
+                type: 'content',
+                icon: '♿',
+                title: 'Teknologi & Aksesibilitas Manusia',
+                content: `Teknologi tidak hanya dibuat untuk mereka yang sempurna fisiknya. Teknologi harus memanusiakan manusia.<br><br>Contoh: Sistem AI berbasis suara yang membantu Guru dengan keterbatasan fisik untuk tetap mengajar dan menulis di papan tulis digital.`,
+                fact: 'Data WHO: 1,3 Miliar orang (16% populasi global) mengalami disabilitas. Teknologi yang baik adalah yang bersifat "Inklusif".'
+            },
+            {
+                type: 'content',
+                icon: '🧠',
+                title: 'Formula Literasi Digital',
+                content: `Gunakan formula keseimbangan ini:<br><br><b>Informasi + Berpikir + Teknologi + Etika + Karya</b><br><br>1. <b>Tahu</b> (Paham)<br>2. <b>Kritis</b> (Filter)<br>3. <b>Terampil</b> (Gunakan)<br>4. <b>Produktif</b> (Ciptakan)<br>5. <b>Etis</b> (Tanggung Jawab)`,
+                fact: 'Tanpa etika dan pemikiran kritis, teknologi canggih justru mempercepat penyebaran hoaks dan misinformasi.'
+            },
+            {
+                type: 'content',
+                icon: '🔍',
+                title: 'Metode Verifikasi di Era AI',
+                content: `Jangan pernah menelan mentah-mentah hasil AI atau internet.<br><br>Gunakan pola:<br><b>Prompt &rarr; AI Output &rarr; Source &rarr; Comparison &rarr; Verification &rarr; Human Revision</b><br><br>AI yang menghasilkan, tetapi MANUSIA yang bertanggung jawab atas kebenarannya.`,
+                fact: 'AI sering mengalami "Halusinasi" (menyajikan informasi palsu dengan gaya bahasa yang sangat meyakinkan). Verifikasi manual adalah wajib.'
+            },
+            {
+                type: 'content',
+                icon: '🕌',
+                title: 'Teknologi & Nilai Akhlak',
+                content: `AI bisa membuat sesuatu menjadi super cepat. Tapi manusialah yang menentukan apakah itu <b>benar, bermanfaat, jujur, dan bertanggung jawab.</b><br><br>Keseimbangan Utama:<br>🧠 Ilmu <br>💻 Keterampilan<br>❤️ Akhlak<br>🤲 Kebermanfaatan`,
+                fact: 'Dalam ekosistem kampus Islam, "Teknologi hanyalah alat, bukan tujuan utama. Tujuan utamanya adalah Rahmatan Lil \'Alamin."'
+            },
+            {
+                type: 'content',
+                icon: '🔥',
+                title: 'Tantangan 5-In-1 Mahasiswa',
+                content: `Saya menantang setiap mahasiswa untuk memiliki 5 hal ini sebelum lulus:<br><br>1️⃣ <b>1 Digital Skill</b> yang dikuasai.<br>2️⃣ <b>1 Digital Product</b> yang nyata.<br>3️⃣ <b>1 Academic Work</b> berbasis riset.<br>4️⃣ <b>1 AI Workflow</b> yang etis.<br>5️⃣ <b>1 Digital Portfolio</b> pribadi.`,
+                fact: 'Mahasiswa dengan portofolio digital riil memiliki persentase 75% lebih tinggi untuk langsung direkrut dibanding yang hanya mengandalkan CV.'
+            },
+            {
+                type: 'content',
+                icon: '🌟',
+                title: 'Visi Akhir (Penutup)',
+                content: `Aplikasi akan berubah. AI akan terus berganti.<br><br>Tapi kemampuan untuk <b>Belajar &rarr; Berpikir &rarr; Beradaptasi &rarr; Mencipta</b> akan abadi.<br><br>Ubah mindset dari "Apa yang teknologi berikan untuk saya?" menjadi <b>"Apa yang bisa saya ciptakan dengan teknologi untuk membantu orang lain?"</b>`,
+                fact: 'Dari Pengguna &rarr; Pembelajar &rarr; Pencipta &rarr; Pemecah Masalah. Wassalamu\'alaikum warahmatullahi wabarakatuh.'
+            },
+            {
+                type: 'content',
+                icon: '🔗',
+                title: 'Sumber Referensi Materi',
+                content: `Keseluruhan gagasan dan narasi dalam modul ini disusun berdasarkan pemikiran inspiratif terkait pengembangan <b>Literasi Digital</b> di era modern.<br><br>Mari budayakan etika digital dengan mengunjungi dan berdiskusi pada tulisan aslinya:<br><br>
+                <div class="text-center mt-6">
+                    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7465385781725999104/" target="_blank" rel="noopener noreferrer" class="relative z-50 inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#0A66C2] text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-[#004182] hover:-translate-y-1 transition-all active:scale-95">
+                        <i class="fa-brands fa-linkedin text-xl"></i> Baca di LinkedIn
+                    </a>
+                </div>`,
+                fact: 'Menyertakan tautan sumber yang valid (atribusi) merupakan bentuk nyata penerapan Etika Digital yang menolak praktik plagiarisme.'
+            },
+            // QUIZ SLIDES
+            { type: 'quiz_intro' },
+            {
+                type: 'quiz',
+                q: 'Berdasarkan materi, mahasiswa saat ini dituntut untuk tidak hanya menjadi "Pengguna Cerdas", tetapi berevolusi menjadi apa?',
+                options: [
+                    'Pengamat Teknologi & Penulis',
+                    'Pembelajar, Pencipta, dan Inovator',
+                    'Konsumen Digital & Gamers',
+                    'Programmer & Hacker'
+                ],
+                correct: 1,
+                explanation: 'Mahasiswa harus bergerak dari Pengguna Cerdas -> Pembelajar -> Pencipta -> Inovator.'
+            },
+            {
+                type: 'quiz',
+                q: 'Apa pola yang benar dalam memverifikasi informasi atau output dari AI?',
+                options: [
+                    'Prompt -> AI Output -> Human Revision -> Publish',
+                    'Prompt -> AI Output -> Source -> Comparison -> Verification -> Human Revision',
+                    'Search -> AI Output -> Copy -> Paste',
+                    'Prompt -> AI Output -> Share to Social Media'
+                ],
+                correct: 1,
+                explanation: 'Pola yang benar adalah: Prompt -> AI Output -> Source -> Comparison -> Verification -> Human Revision. Manusia penentu akhir.'
+            },
+            {
+                type: 'quiz',
+                q: 'Manakah dari berikut ini yang BUKAN merupakan bagian dari "Tantangan 5-In-1" untuk mahasiswa?',
+                options: [
+                    '1 Digital Portfolio',
+                    '1 Digital Product',
+                    '1 Viral Social Media Account',
+                    '1 AI Workflow'
+                ],
+                correct: 2,
+                explanation: 'Tantangannya adalah: 1 Skill, 1 Product, 1 Academic Work, 1 AI Workflow, dan 1 Digital Portfolio. Akun viral bukan target utama.'
+            },
+            { type: 'result' }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let currentSlide = 0;
+        let isDarkMode = false;
+        let isSoundOn = true;
+        let score = 0;
+
+        // --- DOM ELEMENTS ---
+        const slider = document.getElementById('slider');
+        const progressContainer = document.getElementById('progress-container');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnTheme = document.getElementById('btn-theme');
+        const btnSound = document.getElementById('btn-sound');
+        const html = document.documentElement;
+
+        // --- AUDIO ENGINE (Web Audio API - No External Files) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, vol=0.1) {
+            if (!isSoundOn) return;
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sounds = {
+            tap: () => playTone(600, 'sine', 0.1, 0.05),
+            correct: () => {
+                playTone(523.25, 'sine', 0.1, 0.1); // C5
+                setTimeout(() => playTone(659.25, 'sine', 0.2, 0.1), 100); // E5
+                setTimeout(() => playTone(783.99, 'sine', 0.4, 0.1), 200); // G5
+            },
+            wrong: () => {
+                playTone(300, 'sawtooth', 0.2, 0.05);
+                setTimeout(() => playTone(250, 'sawtooth', 0.3, 0.05), 150);
+            },
+            finish: () => {
+                playTone(440, 'square', 0.2, 0.05);
+                setTimeout(() => playTone(554, 'square', 0.2, 0.05), 200);
+                setTimeout(() => playTone(659, 'square', 0.4, 0.05), 400);
+            }
+        };
+
+        // --- RENDER ENGINE ---
+        function initApp() {
+            renderSlides();
+            renderProgress();
+            updateView();
+            
+            // Keyboard Nav (Tap layar kiri/kanan dihapus agar tidak bentrok dengan Kuis)
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'ArrowRight') navigate(1);
+                if(e.key === 'ArrowLeft') navigate(-1);
+            });
+
+            btnTheme.addEventListener('click', toggleTheme);
+            btnSound.addEventListener('click', toggleSound);
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            if(isDarkMode) {
+                html.classList.add('dark');
+                btnTheme.innerHTML = '<i class="fa-solid fa-sun text-yellow-400"></i>';
+            } else {
+                html.classList.remove('dark');
+                btnTheme.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            }
+            sounds.tap();
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            if(isSoundOn) {
+                btnSound.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                sounds.tap();
+            } else {
+                btnSound.innerHTML = '<i class="fa-solid fa-volume-xmark text-red-500"></i>';
+            }
+        }
+
+        function renderSlides() {
+            slider.innerHTML = '';
+            slidesData.forEach((slide, index) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'w-full h-full flex-shrink-0 flex items-center justify-center p-6 relative pt-20 pb-20';
+                
+                let contentHTML = '';
+
+                if (slide.type === 'intro' || slide.type === 'content') {
+                    contentHTML = `
+                        <div class="glass p-8 rounded-3xl w-full max-w-lg shadow-2xl transform transition-all duration-500 scale-95 opacity-0 slide-content flex flex-col h-full max-h-[85vh]">
+                            <div class="text-6xl mb-4 text-center animate-bounce-slow">${slide.icon}</div>
+                            <h1 class="text-2xl md:text-3xl font-bold mb-2 text-center text-brand-600 dark:text-brand-400">${slide.title}</h1>
+                            ${slide.subtitle ? `<h2 class="text-lg font-semibold mb-6 text-center text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 pb-4">${slide.subtitle}</h2>` : ''}
+                            
+                            <div class="flex-grow overflow-y-auto no-scrollbar mb-4 text-sm md:text-base leading-relaxed text-gray-700 dark:text-gray-200">
+                                <p>${slide.content}</p>
+                            </div>
+                            
+                            ${slide.fact ? `
+                            <div class="fact-box mt-auto p-4 bg-brand-50 dark:bg-brand-900/30 rounded-2xl border border-brand-200 dark:border-brand-700">
+                                <div class="flex items-start gap-3">
+                                    <i class="fa-solid fa-lightbulb text-brand-500 mt-1"></i>
+                                    <div>
+                                        <h4 class="text-xs font-bold uppercase text-brand-600 dark:text-brand-300 mb-1">Fakta Menarik</h4>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 font-medium">${slide.fact}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else if (slide.type === 'quiz_intro') {
+                    contentHTML = `
+                        <div class="glass p-8 rounded-3xl w-full max-w-lg text-center slide-content opacity-0 scale-95 transition-all duration-500">
+                            <div class="text-6xl mb-6">🎯</div>
+                            <h2 class="text-3xl font-bold mb-4 text-brand-600 dark:text-brand-400">Waktunya Kuis!</h2>
+                            <p class="mb-8 text-gray-600 dark:text-gray-300">Mari uji pemahaman Anda tentang Literasi Digital. Ada 3 pertanyaan ringkas menanti.</p>
+                            <button onclick="navigate(1)" class="relative z-50 px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-full font-bold shadow-lg shadow-brand-500/30 transition-transform active:scale-95">
+                                Mulai Kuis <i class="fa-solid fa-play ml-2"></i>
+                            </button>
+                        </div>
+                    `;
+                } else if (slide.type === 'quiz') {
+                    let optsHTML = slide.options.map((opt, i) => `
+                        <button onclick="handleAnswer(${index}, ${i})" class="quiz-btn-${index} relative z-50 w-full text-left p-4 mb-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-brand-500 dark:hover:border-brand-500 bg-white/50 dark:bg-gray-800/50 font-medium transition-all active:scale-[0.98]">
+                            <span class="inline-block w-6 h-6 text-center bg-gray-200 dark:bg-gray-700 rounded-md mr-2 text-sm leading-6">${String.fromCharCode(65+i)}</span> ${opt}
+                        </button>
+                    `).join('');
+
+                    contentHTML = `
+                        <div class="glass p-6 md:p-8 rounded-3xl w-full max-w-lg slide-content opacity-0 scale-95 transition-all duration-500 max-h-[85vh] flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <span class="text-sm font-bold text-brand-500"><i class="fa-solid fa-circle-question mr-1"></i> Pertanyaan</span>
+                            </div>
+                            <h3 class="text-lg md:text-xl font-bold mb-6 text-gray-800 dark:text-white leading-snug">${slide.q}</h3>
+                            <div class="flex-grow overflow-y-auto no-scrollbar">
+                                ${optsHTML}
+                            </div>
+                            <div id="feedback-${index}" class="hidden mt-4 p-4 rounded-xl text-sm font-medium"></div>
+                            <button id="next-quiz-${index}" onclick="navigate(1)" class="hidden mt-4 relative z-50 w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold shadow-lg transition-transform active:scale-95">Lanjut <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                        </div>
+                    `;
+                } else if (slide.type === 'result') {
+                    contentHTML = `
+                        <div class="glass p-8 rounded-3xl w-full max-w-lg text-center slide-content opacity-0 scale-95 transition-all duration-500">
+                            <div id="result-icon" class="text-7xl mb-6">🏆</div>
+                            <h2 class="text-3xl font-bold mb-2 text-gray-800 dark:text-white">Modul Selesai!</h2>
+                            <p class="text-gray-500 dark:text-gray-400 mb-6">Skor Akhir Anda:</p>
+                            <div class="text-6xl font-black text-brand-600 dark:text-brand-400 mb-8"><span id="final-score">0</span>/3</div>
+                            <p id="result-msg" class="mb-8 font-medium text-gray-700 dark:text-gray-200"></p>
+                            <button onclick="location.reload()" class="relative z-50 px-8 py-3 bg-gray-800 dark:bg-white text-white dark:text-gray-900 rounded-full font-bold shadow-lg transition-transform active:scale-95">
+                                <i class="fa-solid fa-rotate-right mr-2"></i> Ulangi Modul
+                            </button>
+                        </div>
+                    `;
+                }
+
+                slideDiv.innerHTML = contentHTML;
+                slider.appendChild(slideDiv);
+            });
+        }
+
+        function renderProgress() {
+            progressContainer.innerHTML = '';
+            const total = slidesData.length;
+            for(let i = 0; i < total; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'flex-1 rounded-full bg-gray-300 dark:bg-gray-700 relative overflow-hidden';
+                const fill = document.createElement('div');
+                fill.className = 'absolute top-0 left-0 h-full w-0 bg-brand-500 transition-all duration-300 ease-linear';
+                fill.id = `prog-fill-${i}`;
+                bar.appendChild(fill);
+                progressContainer.appendChild(bar);
+            }
+        }
+
+        function updateView() {
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            
+            // Mengatur Visibilitas Tombol Navigasi Bawah
+            if (currentSlide === 0) {
+                btnPrev.classList.add('hidden');
+            } else {
+                btnPrev.classList.remove('hidden');
+            }
+
+            if (currentSlide === slidesData.length - 1) {
+                btnNext.classList.add('hidden');
+            } else {
+                btnNext.classList.remove('hidden');
+            }
+
+            for(let i=0; i<slidesData.length; i++) {
+                const fill = document.getElementById(`prog-fill-${i}`);
+                if(i < currentSlide) fill.style.width = '100%';
+                else if(i === currentSlide) fill.style.width = '100%'; 
+                else fill.style.width = '0%';
+            }
+
+            document.querySelectorAll('.slide-content').forEach((el, idx) => {
+                if(idx === currentSlide) {
+                    setTimeout(() => {
+                        el.classList.remove('opacity-0', 'scale-95');
+                        el.classList.add('opacity-100', 'scale-100');
+                    }, 50);
+                } else {
+                    el.classList.remove('opacity-100', 'scale-100');
+                    el.classList.add('opacity-0', 'scale-95');
+                }
+            });
+
+            if(slidesData[currentSlide].type === 'result') {
+                document.getElementById('final-score').innerText = score;
+                const msg = document.getElementById('result-msg');
+                const icon = document.getElementById('result-icon');
+                if(score === 3) {
+                    msg.innerText = "Luar biasa! Anda siap menjadi Digital Innovator.";
+                    icon.innerText = "🌟";
+                    sounds.finish();
+                } else if(score >= 1) {
+                    msg.innerText = "Pemahaman yang baik, terus tingkatkan literasi digital Anda.";
+                    icon.innerText = "👍";
+                } else {
+                    msg.innerText = "Jangan menyerah! Mari baca ulang materinya.";
+                    icon.innerText = "💪";
+                }
+            }
+        }
+
+        window.navigate = function(dir) {
+            if (dir > 0 && slidesData[currentSlide].type === 'quiz') {
+                const feedback = document.getElementById(`feedback-${currentSlide}`);
+                if (feedback.classList.contains('hidden')) {
+                    const btns = document.querySelectorAll(`.quiz-btn-${currentSlide}`);
+                    btns.forEach(btn => {
+                        btn.classList.add('animate-pulse');
+                        setTimeout(() => btn.classList.remove('animate-pulse'), 500);
+                    });
+                    
+                    // Efek getar juga pada tombol Lanjut jika belum menjawab
+                    btnNext.classList.add('animate-pulse', 'bg-red-500');
+                    setTimeout(() => btnNext.classList.remove('animate-pulse', 'bg-red-500'), 500);
+                    
+                    sounds.wrong();
+                    return;
+                }
+            }
+
+            const newSlide = currentSlide + dir;
+            if (newSlide >= 0 && newSlide < slidesData.length) {
+                currentSlide = newSlide;
+                sounds.tap();
+                updateView();
+            }
+        };
+
+        window.handleAnswer = function(slideIndex, optIndex) {
+            const slide = slidesData[slideIndex];
+            const btns = document.querySelectorAll(`.quiz-btn-${slideIndex}`);
+            const feedback = document.getElementById(`feedback-${slideIndex}`);
+            const nextBtn = document.getElementById(`next-quiz-${slideIndex}`);
+
+            btns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.classList.remove('hover:border-brand-500');
+            });
+
+            const isCorrect = (optIndex === slide.correct);
+            const selectedBtn = btns[optIndex];
+            selectedBtn.classList.remove('opacity-50');
+
+            feedback.classList.remove('hidden');
+
+            if (isCorrect) {
+                score++;
+                selectedBtn.classList.add('bg-green-100', 'border-green-500', 'dark:bg-green-900/40', 'dark:border-green-500');
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-green-500 mr-2"></i> <span class="text-green-700 dark:text-green-400"><b>Benar!</b> ${slide.explanation}</span>`;
+                feedback.classList.add('bg-green-50', 'dark:bg-green-900/20');
+                sounds.correct();
+            } else {
+                selectedBtn.classList.add('bg-red-100', 'border-red-500', 'dark:bg-red-900/40', 'dark:border-red-500');
+                btns[slide.correct].classList.remove('opacity-50');
+                btns[slide.correct].classList.add('border-green-500', 'border-2'); 
+                
+                feedback.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-500 mr-2"></i> <span class="text-red-700 dark:text-red-400"><b>Kurang tepat.</b> ${slide.explanation}</span>`;
+                feedback.classList.add('bg-red-50', 'dark:bg-red-900/20');
+                sounds.wrong();
+            }
+
+            nextBtn.classList.remove('hidden');
+        };
+
+        // Initialize on load
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
